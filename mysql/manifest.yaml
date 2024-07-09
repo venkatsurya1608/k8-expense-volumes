@@ -53,7 +53,7 @@ metadata:
   name: mysql
   namespace: expense
 spec:
-  cluster: None
+  clusterIP: None
   selector:
     tier: db
     component: mysql
