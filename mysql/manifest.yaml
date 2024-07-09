@@ -10,3 +10,55 @@ spec:
   resources:
     requests:
       storage: 4Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: expense
+spec:
+  selector:
+    matchLabels:
+      tier: db
+      component: mysql
+      project: expense 
+      # has to match .spec.template.metadata.labels
+  serviceName: "mysql"
+  replicas: 2 # by default is 1
+  minReadySeconds: 10 # by default is 0
+  template:
+    metadata:
+      labels :
+        tier: db
+        component: mysql
+        project: expense # has to match .spec.selector.matchLabels
+    spec:
+      containers:
+      - name: mysql
+        image: venkatsurya1608/mysql:1.6
+        ports:
+        - containerPort: 80
+          name: web
+        volumeMounts:
+        - name: www
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql
+        persistentVolumeClaim:
+          claimName: mysql 
+---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: mysql
+#   namespace: expense
+# spec:
+#   cluster: None
+#   selector:
+#     tier: db
+#     component: mysql
+#     project: expense 
+#   ports:
+#   - protocol: TCP
+#     port: 3306 #service-port
+#     targetPort: 3306 #target-port             
