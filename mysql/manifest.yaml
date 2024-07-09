@@ -46,19 +46,19 @@ spec:
       - name: mysql
         persistentVolumeClaim:
           claimName: mysql 
-# ---
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: mysql
-#   namespace: expense
-# spec:
-#   cluster: None
-#   selector:
-#     tier: db
-#     component: mysql
-#     project: expense 
-#   ports:
-#   - protocol: TCP
-#     port: 3306 #service-port
-#     targetPort: 3306 #target-port             
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: expense
+spec:
+  cluster: None
+  selector:
+    tier: db
+    component: mysql
+    project: expense 
+  ports:
+  - protocol: TCP
+    port: 3306 #service-port
+    targetPort: 3306 #target-port             
