@@ -1,15 +1,37 @@
-apiVersion:  v1 
-kind: PersistentVolumeClaim
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-headless
+  namespace: expense
+spec:
+  clusterIP: None # this is called headless service
+  selector:
+    component: mysql
+    project: expense
+    tier: db 
+  ports:
+  - protocol: TCP
+    port: 3306 #service-port
+    targetPort: 3306 #target-port
+
+---
+apiVersion: v1
+kind: Service
 metadata:
   name: mysql
   namespace: expense
-spec: 
-  storageClassName: "expense-ebs"
-  accessModes: 
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 4Gi
+spec:
+  selector:
+    component: mysql
+    project: expense
+    tier: db 
+  ports:
+  - protocol: TCP
+    port: 3306 #service-port
+    targetPort: 3306 #target-port
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -19,46 +41,34 @@ metadata:
 spec:
   selector:
     matchLabels:
-      tier: db
-      component: mysql
-      project: expense 
       # has to match .spec.template.metadata.labels
-  serviceName: "nginx"
-  replicas: 3 # by default is 1
-  minReadySeconds: 10 # by default is 0
+      component: mysql
+      project: expense
+      tier: db 
+  serviceName: "mysql-headless" # provide headless service name
+  replicas: 2 # by default is 1
   template:
     metadata:
-      labels :
-        tier: db
+      labels:
+       # has to match .spec.selector.matchLabels
         component: mysql
-        project: expense # has to match .spec.selector.matchLabels
+        project: expense
+        tier: db 
     spec:
       containers:
       - name: mysql
         image: venkatsurya1608/mysql:1.6
-        ports:
-        - containerPort: 80
-          name: web
+        imagePullPolicy: Always
         volumeMounts:
-        - name: www
+        - name: mysql
           mountPath: /var/lib/mysql
-      volumes:
-      - name: mysql
-        persistentVolumeClaim:
-          claimName: mysql 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mysql
-  namespace: expense
-spec:
-  clusterIP: None
-  selector:
-    tier: db
-    component: mysql
-    project: expense 
-  ports:
-  - protocol: TCP
-    port: 3306 #service-port
-    targetPort: 3306 #target-port             
+  # PVC declaration, it is mandatory
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "expense-ebs"
+      resources:
+        requests:
+          storage: 1G
